@@ -5,6 +5,12 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { createRawLog, getUserWorkflows, createWorkflow, getWorkflowById, getWorkflowSteps, updateWorkflowStatus, createWorkflowSteps, addWorkflowHistory } from "./db";
 import { callLLM } from "./_core/llm";
+import { paymentRouter } from "./routers/paymentRouter";
+import { securityRouter } from "./routers/securityRouter";
+import { webhookRouter } from "./routers/webhookRouter";
+import { adminRouter } from "./routers/adminRouter";
+import { notificationRouter } from "./routers/notificationRouter";
+import { createAuditEntry } from "./audit";
 
 const workflowRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -35,6 +41,16 @@ const workflowRouter = router({
         newState: JSON.stringify({ status: "aprobado" }),
         changedBy: ctx.user!.id,
       });
+
+      // Audit entry
+      await createAuditEntry({
+        userId: ctx.user!.id,
+        actionType: "workflow_approved",
+        description: `Approved workflow #${input.id}: ${workflow.name}`,
+        severity: "medium",
+        entityType: "workflow",
+        entityId: input.id,
+      });
       
       return { success: true };
     }),
@@ -53,6 +69,16 @@ const workflowRouter = router({
         previousState: JSON.stringify({ status: workflow.status }),
         newState: JSON.stringify({ status: "fallido" }),
         changedBy: ctx.user!.id,
+      });
+
+      // Audit entry
+      await createAuditEntry({
+        userId: ctx.user!.id,
+        actionType: "workflow_rejected",
+        description: `Rejected workflow #${input.id}: ${workflow.name}`,
+        severity: "medium",
+        entityType: "workflow",
+        entityId: input.id,
       });
       
       return { success: true };
@@ -100,22 +126,53 @@ const logsRouter = router({
         changedBy: ctx.user!.id,
       });
 
+      // Audit entry
+      await createAuditEntry({
+        userId: ctx.user!.id,
+        actionType: "log_ingested",
+        description: `Ingested log and created workflow #${workflowId}`,
+        severity: "low",
+        entityType: "log",
+        entityId: logId,
+      });
+
       return { workflowId, logId };
     }),
 });
 
+// Auth router with audit logging
+const authRouter = router({
+  me: publicProcedure.query(opts => opts.ctx.user),
+  logout: publicProcedure.mutation(({ ctx }) => {
+    const cookieOptions = getSessionCookieOptions(ctx.req);
+    ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    
+    // Audit logout
+    if (ctx.user) {
+      createAuditEntry({
+        userId: ctx.user.id,
+        actionType: "user_logout",
+        description: `User ${ctx.user.email} logged out`,
+        severity: "low",
+        entityType: "user",
+        entityId: ctx.user.id,
+      }).catch(() => {}); // Don't block logout on audit failure
+    }
+    
+    return { success: true } as const;
+  }),
+});
+
 export const appRouter = router({
   system: systemRouter,
-  auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return { success: true } as const;
-    }),
-  }),
+  auth: authRouter,
   workflows: workflowRouter,
   logs: logsRouter,
+  payments: paymentRouter,
+  security: securityRouter,
+  webhooks: webhookRouter,
+  admin: adminRouter,
+  notifications: notificationRouter,
 });
 
 export type AppRouter = typeof appRouter;
