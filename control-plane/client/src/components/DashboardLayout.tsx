@@ -47,6 +47,7 @@ const menuItems = [
   { icon: GitBranch, label: "Workflows", path: "/workflows", color: "text-purple-400" },
   { icon: FileText, label: "Log Ingest", path: "/ingest", color: "text-teal-400" },
   { icon: CreditCard, label: "Billing", path: "/billing", color: "text-green-400" },
+  { icon: User, label: "Perfil", path: "/profile", color: "text-violet-400" },
   { icon: Shield, label: "Seguridad", path: "/security", color: "text-orange-400", adminOnly: true },
   { icon: Settings, label: "Admin", path: "/admin", color: "text-pink-400", adminOnly: true },
 ];
@@ -284,9 +285,12 @@ function DashboardLayoutContent({
                   <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem className="cursor-pointer text-text-secondary hover:text-white focus:text-white focus:bg-white/10">
+                <DropdownMenuItem
+                  onClick={() => setLocation("/profile")}
+                  className="cursor-pointer text-text-secondary hover:text-white focus:text-white focus:bg-white/10"
+                >
                   <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
+                  <span>Mi Perfil</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem

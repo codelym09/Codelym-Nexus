@@ -12,6 +12,7 @@ import LogIngest from "./pages/LogIngest";
 import Billing from "./pages/Billing";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Profile from "./pages/Profile";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <Route path={"/billing"} component={Billing} />
       <Route path={"/security"} component={SecurityDashboard} />
       <Route path={"/admin"} component={AdminDashboard} />
+      <Route path={"/profile"} component={Profile} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -11,6 +11,8 @@ import {
   XCircle, RefreshCw
 } from "lucide-react";
 import { useLocation } from "wouter";
+import AnimatedMetricCard from "@/components/AnimatedMetricCard";
+import { WorkflowActivityChart, StatusDistributionChart, useActivityData, useStatusDistribution } from "@/components/ActivityChart";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   pendiente:  { label: "Pendiente",  color: "text-yellow-300", bg: "bg-yellow-500/15", dot: "bg-yellow-400" },
@@ -126,6 +128,8 @@ export default function Home() {
   const pendingWf = workflows?.filter((w) => w.status === "pendiente").length ?? 0;
   const totalWf = workflows?.length ?? 0;
   const completionRate = totalWf > 0 ? Math.round((completedWf / totalWf) * 100) : 0;
+  const activityData = useActivityData(workflows);
+  const statusDistribution = useStatusDistribution(workflows);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -159,47 +163,85 @@ export default function Home() {
         </Button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — Animated Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
+        <AnimatedMetricCard
           label="Workflows"
           value={totalWf}
           icon={GitBranch}
-          color="text-purple-400"
-          sub={`${pendingWf} pendientes`}
+          color="text-violet-400"
+          bgColor="rgba(139,92,246,0.08)"
+          borderColor="rgba(139,92,246,0.25)"
+          glowColor="rgba(139,92,246,0.4)"
+          trend={{ value: pendingWf, positive: pendingWf === 0, label: `${pendingWf} pendientes` }}
+          delay={0}
         />
-        <StatCard
+        <AnimatedMetricCard
           label="Completados"
           value={completedWf}
           icon={CheckCircle2}
           color="text-teal-400"
-          sub={`${completionRate}% tasa de éxito`}
+          bgColor="rgba(20,184,166,0.08)"
+          borderColor="rgba(20,184,166,0.25)"
+          glowColor="rgba(20,184,166,0.4)"
+          trend={{ value: completionRate, positive: completionRate >= 50, label: `${completionRate}% tasa de éxito` }}
+          delay={100}
         />
-        <StatCard
+        <AnimatedMetricCard
           label="Notificaciones"
           value={notifications?.length ?? 0}
           icon={Bell}
           color="text-blue-400"
-          sub="Últimas 24h"
+          bgColor="rgba(59,130,246,0.08)"
+          borderColor="rgba(59,130,246,0.25)"
+          glowColor="rgba(59,130,246,0.4)"
+          description="Últimas 24h"
+          delay={200}
         />
         {user.role === "admin" ? (
-          <StatCard
+          <AnimatedMetricCard
             label="Eventos Críticos"
             value={securityStats?.critical ?? 0}
             icon={AlertTriangle}
-            color={securityStats?.critical ? "text-red-400" : "text-green-400"}
-            sub={securityStats?.critical ? "Requieren atención" : "Sin alertas"}
+            color={securityStats?.critical ? "text-red-400" : "text-emerald-400"}
+            bgColor={securityStats?.critical ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)"}
+            borderColor={securityStats?.critical ? "rgba(239,68,68,0.25)" : "rgba(34,197,94,0.25)"}
+            glowColor={securityStats?.critical ? "rgba(239,68,68,0.4)" : "rgba(34,197,94,0.4)"}
+            description={securityStats?.critical ? "Requieren atención" : "Sin alertas"}
+            delay={300}
           />
         ) : (
-          <StatCard
+          <AnimatedMetricCard
             label="Estado"
-            value="Activo"
+            value={100}
+            suffix="%"
             icon={Activity}
-            color="text-green-400"
-            sub="Cuenta en regla"
+            color="text-emerald-400"
+            bgColor="rgba(34,197,94,0.08)"
+            borderColor="rgba(34,197,94,0.25)"
+            glowColor="rgba(34,197,94,0.4)"
+            description="Cuenta en regla"
+            delay={300}
           />
         )}
       </div>
+
+      {/* Gráficos de Actividad */}
+      {totalWf > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <WorkflowActivityChart
+            data={activityData}
+            title="Actividad de Workflows"
+            subtitle="Últimos 7 días"
+            height={180}
+          />
+          <StatusDistributionChart
+            data={statusDistribution}
+            title="Distribución por Estado"
+            height={160}
+          />
+        </div>
+      )}
 
       {/* Completion Progress (si hay workflows) */}
       {totalWf > 0 && (
