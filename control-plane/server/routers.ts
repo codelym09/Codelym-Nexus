@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { createRawLog, getUserWorkflows, createWorkflow, getWorkflowById, getWorkflowSteps, updateWorkflowStatus, createWorkflowSteps, addWorkflowHistory } from "./db";
+import { createRawLog, getUserWorkflows, createWorkflow, getWorkflowById, getWorkflowSteps, updateWorkflowStatus, createWorkflowSteps, addWorkflowHistory, getWorkflowHistory, deleteWorkflow } from "./db";
 import { callLLM } from "./_core/llm";
 import { paymentRouter } from "./routers/paymentRouter";
 import { securityRouter } from "./routers/securityRouter";
@@ -81,6 +81,64 @@ const workflowRouter = router({
         entityId: input.id,
       });
       
+      return { success: true };
+    }),
+
+  getHistory: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workflow = await getWorkflowById(input.id);
+      if (!workflow) throw new Error("Workflow not found");
+      if (workflow.userId !== ctx.user!.id) throw new Error("Unauthorized");
+      return await getWorkflowHistory(input.id);
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const workflow = await getWorkflowById(input.id);
+      if (!workflow) throw new Error("Workflow not found");
+      if (workflow.userId !== ctx.user!.id) throw new Error("Unauthorized");
+
+      await deleteWorkflow(input.id);
+
+      await createAuditEntry({
+        userId: ctx.user!.id,
+        actionType: "workflow_deleted",
+        description: `Deleted workflow #${input.id}: ${workflow.name}`,
+        severity: "medium",
+        entityType: "workflow",
+        entityId: input.id,
+      });
+
+      return { success: true };
+    }),
+
+  updateStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.enum(["pendiente", "aprobado", "ejecutando", "completado", "fallido"]) }))
+    .mutation(async ({ input, ctx }) => {
+      const workflow = await getWorkflowById(input.id);
+      if (!workflow) throw new Error("Workflow not found");
+      if (workflow.userId !== ctx.user!.id) throw new Error("Unauthorized");
+
+      await updateWorkflowStatus(input.id, input.status);
+      await addWorkflowHistory({
+        workflowId: input.id,
+        action: `status_changed_to_${input.status}`,
+        previousState: JSON.stringify({ status: workflow.status }),
+        newState: JSON.stringify({ status: input.status }),
+        changedBy: ctx.user!.id,
+      });
+
+      await createAuditEntry({
+        userId: ctx.user!.id,
+        actionType: "workflow_status_updated",
+        description: `Updated workflow #${input.id} status from ${workflow.status} to ${input.status}`,
+        severity: "low",
+        entityType: "workflow",
+        entityId: input.id,
+      });
+
       return { success: true };
     }),
 });

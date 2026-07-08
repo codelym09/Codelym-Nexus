@@ -75,10 +75,16 @@ export default function Profile() {
   const failedWf = workflows?.filter((w) => w.status === "fallido").length ?? 0;
   const completionRate = totalWf > 0 ? Math.round((completedWf / totalWf) * 100) : 0;
 
-  const joinDate = new Date().toLocaleDateString("es-AR", {
-    year: "numeric",
-    month: "long",
-  });
+  const joinDate = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "long" })
+    : new Date().toLocaleDateString("es-AR", { year: "numeric", month: "long" });
+
+  const lastLogin = user.lastSignedIn
+    ? new Date(user.lastSignedIn).toLocaleDateString("es-AR", {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      })
+    : null;
 
   const handleLogout = async () => {
     try {
@@ -162,9 +168,17 @@ export default function Profile() {
               <Mail className="h-3.5 w-3.5 text-zinc-500" />
               <p className="text-sm text-zinc-400">{user.email}</p>
             </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <Calendar className="h-3.5 w-3.5 text-zinc-500" />
-              <p className="text-xs text-zinc-500">Miembro desde {joinDate}</p>
+            <div className="flex flex-wrap items-center gap-3 mt-1.5">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                <p className="text-xs text-zinc-500">Miembro desde {joinDate}</p>
+              </div>
+              {lastLogin && (
+                <div className="flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5 text-zinc-500" />
+                  <p className="text-xs text-zinc-500">Último acceso: {lastLogin}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -205,6 +219,24 @@ export default function Profile() {
             delay={0.25}
           />
         </div>
+        {totalWf > 0 && (
+          <div className="mt-3 p-4 rounded-xl border" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-zinc-400 font-medium">Progreso general</span>
+              <span className="text-xs font-bold text-emerald-400">{completionRate}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-teal-500 transition-all duration-700"
+                style={{ width: `${completionRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5 text-xs text-zinc-600">
+              <span>{completedWf} completados</span>
+              <span>{failedWf > 0 ? `${failedWf} fallidos` : "Sin fallos"}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info Cards */}

@@ -25,6 +25,7 @@ import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   Activity,
+  Bell,
   CreditCard,
   FileText,
   GitBranch,
@@ -41,6 +42,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { useAuth as useAuthHook } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", color: "text-blue-400" },
@@ -137,6 +139,12 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  const { data: notifications } = trpc.notifications.getNotifications.useQuery(
+    { limit: 10 },
+    { enabled: !!user, refetchInterval: 60_000 }
+  );
+  const unreadCount = notifications?.length ?? 0;
 
   const visibleMenuItems = menuItems.filter(
     (item) => !item.adminOnly || user?.role === "admin"
@@ -329,7 +337,19 @@ function DashboardLayoutContent({
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setLocation("/")}
+                className="relative p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Notificaciones"
+              >
+                <Bell className="h-4 w-4 text-text-secondary" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-purple-500 text-white text-[9px] flex items-center justify-center font-bold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
               <div className="h-2 w-2 rounded-full bg-teal-400 animate-pulse" />
               <span className="text-xs text-text-secondary">Online</span>
             </div>

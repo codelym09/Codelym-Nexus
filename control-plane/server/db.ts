@@ -152,3 +152,19 @@ export async function addWorkflowHistory(entry: InsertWorkflowHistoryEntry) {
   if (!db) throw new Error("Database not available");
   await db.insert(workflowHistory).values(entry);
 }
+
+export async function getWorkflowHistory(workflowId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { desc } = await import("drizzle-orm");
+  return await db.select().from(workflowHistory).where(eq(workflowHistory.workflowId, workflowId)).orderBy(desc(workflowHistory.createdAt));
+}
+
+export async function deleteWorkflow(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete related records first
+  await db.delete(workflowSteps).where(eq(workflowSteps.workflowId, id));
+  await db.delete(workflowHistory).where(eq(workflowHistory.workflowId, id));
+  await db.delete(workflows).where(eq(workflows.id, id));
+}
