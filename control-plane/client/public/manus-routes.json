@@ -1,0 +1,1 @@
+{"routes":[{"path":"/","title":"Codelym Nexus"},{"path":"/store","title":"Casa Nómada Store"},{"path":"/workflows","title":"Workflows"},{"path":"/workflows/:id","title":"Workflow"},{"path":"/ingest","title":"Log Ingest"},{"path":"/billing","title":"Billing"},{"path":"/security","title":"Seguridad"},{"path":"/admin","title":"Admin"},{"path":"/profile","title":"Perfil"}]}

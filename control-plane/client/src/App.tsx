@@ -11,8 +11,9 @@ import WorkflowDetail from "./pages/WorkflowDetail";
 import LogIngest from "./pages/LogIngest";
 import Billing from "./pages/Billing";
 import SecurityDashboard from "./pages/SecurityDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Profile from "./pages/Profile";
+import AdminDashboard from "@/pages/AdminDashboard";
+import Profile from "@/pages/Profile";
+import CommerceMVP from "@/pages/CommerceMVP";
 
 function Router() {
   return (
@@ -32,14 +33,13 @@ function Router() {
 }
 
 function App() {
+  const isCommerce = typeof window !== "undefined" && window.location.pathname.startsWith("/store");
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
-          <DashboardLayout>
-            <Router />
-          </DashboardLayout>
+          {isCommerce ? <CommerceMVP /> : <DashboardLayout><Router /></DashboardLayout>}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
