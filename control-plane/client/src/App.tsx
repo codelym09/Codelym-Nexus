@@ -14,11 +14,13 @@ import SecurityDashboard from "./pages/SecurityDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Profile from "@/pages/Profile";
 import CommerceMVP from "@/pages/CommerceMVP";
+import SentinelWatch from "@/pages/SentinelWatch";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/sentinel"} component={SentinelWatch} />
       <Route path={"/workflows"} component={Workflows} />
       <Route path={"/workflows/:id"} component={WorkflowDetail} />
       <Route path={"/ingest"} component={LogIngest} />

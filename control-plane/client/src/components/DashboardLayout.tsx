@@ -32,6 +32,7 @@ import {
   LayoutDashboard,
   LogOut,
   PanelLeft,
+  Radar,
   Settings,
   Shield,
   User,
@@ -46,6 +47,7 @@ import { trpc } from "@/lib/trpc";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", color: "text-blue-400" },
+  { icon: Radar, label: "Sentinel Watch", path: "/sentinel", color: "text-cyan-300" },
   { icon: GitBranch, label: "Workflows", path: "/workflows", color: "text-purple-400" },
   { icon: FileText, label: "Log Ingest", path: "/ingest", color: "text-teal-400" },
   { icon: CreditCard, label: "Billing", path: "/billing", color: "text-green-400" },
